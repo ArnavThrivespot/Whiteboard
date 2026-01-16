@@ -1,6 +1,6 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/edge-config';
 
 export const BOARD_KEY = 'kanban-board-state';
 
-// Initialize KV client - Vercel will provide KV_URL and KV_REST_API_URL env vars
-export { kv };
+// Initialize Edge Config client - Vercel will provide EDGE_CONFIG env var
+export const edgeConfig = createClient(process.env.EDGE_CONFIG);

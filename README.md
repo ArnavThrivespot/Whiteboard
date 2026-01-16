@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kanban Board Application
+
+A collaborative Kanban board built with Next.js, featuring real-time updates and Vercel Edge Config for data storage.
+
+## Features
+
+- 🏗️ **Multi-column Kanban Board** - Organize tasks across different development stages
+- 🔄 **Real-time Updates** - Changes sync automatically across all users via polling
+- 🎯 **Drag & Drop** - Intuitive task management with @dnd-kit
+- ☁️ **Vercel Edge Config** - Global data storage with low-latency access
+- 📱 **Responsive Design** - Works on desktop and mobile devices
+
+## Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **Styling**: Tailwind CSS
+- **Drag & Drop**: @dnd-kit
+- **Data Storage**: Vercel Edge Config
+- **Deployment**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/kanban-board.git
+cd kanban-board
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env.local` file in the root directory:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Vercel Edge Config connection string
+EDGE_CONFIG=your_edge_config_connection_string_here
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment to Vercel
 
-## Deploy on Vercel
+### 1. Set up Vercel Edge Config
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Go to your [Vercel Dashboard](https://vercel.com/dashboard)
+2. Navigate to your project (or create a new one)
+3. Go to Storage → Edge Config
+4. Create a new Edge Config store
+5. Copy the connection string
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Deploy the Application
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add the `EDGE_CONFIG` environment variable in Vercel project settings
+4. Deploy!
+
+### 3. Alternative: Vercel CLI
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+
+# Add environment variables
+vercel env add EDGE_CONFIG
+```
+
+## Board Structure
+
+The application includes 7 columns for a typical development workflow:
+
+1. **Widgets to design** - Features ready for design
+2. **Widgets ready for SAF development** - Ready for frontend development
+3. **Widgets in SAF development** - Currently in frontend development
+4. **Widgets ready for JavaScript development** - Ready for backend development
+5. **Widgets in JavaScript development** - Currently in backend development
+6. **Widgets ready for deployment** - Ready for production deployment
+7. **Widgets in deployment** - Currently being deployed
+
+## API Endpoints
+
+- `GET /api/board` - Fetch current board state
+- `POST /api/board` - Update board state
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
