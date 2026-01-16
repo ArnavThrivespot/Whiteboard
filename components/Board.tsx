@@ -174,6 +174,21 @@ export default function Board() {
     syncBoardState(newColumns);
   };
 
+  const editTask = (taskId: string, columnId: string, newContent: string) => {
+    const newColumns = columns.map(col =>
+      col.id === columnId
+        ? {
+            ...col,
+            tasks: col.tasks.map(task =>
+              task.id === taskId ? { ...task, content: newContent } : task
+            ),
+          }
+        : col
+    );
+    setColumns(newColumns);
+    syncBoardState(newColumns);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over) {
@@ -218,6 +233,7 @@ export default function Board() {
               column={widgetsToDesign}
               onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
         </div>
@@ -227,16 +243,16 @@ export default function Board() {
             <Column
               key={readySaf.id}
               column={readySaf}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
           {inSaf && (
             <Column
               key={inSaf.id}
               column={inSaf}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
         </div>
@@ -246,16 +262,16 @@ export default function Board() {
             <Column
               key={readyJs.id}
               column={readyJs}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
           {inJs && (
             <Column
               key={inJs.id}
               column={inJs}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
         </div>
@@ -265,16 +281,16 @@ export default function Board() {
             <Column
               key={readyDeploy.id}
               column={readyDeploy}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
           {inDeploy && (
             <Column
               key={inDeploy.id}
               column={inDeploy}
-              onAddTask={addTask}
               onDeleteTask={deleteTask}
+              onEditTask={editTask}
             />
           )}
         </div>
