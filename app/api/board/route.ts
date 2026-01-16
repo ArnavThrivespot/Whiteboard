@@ -4,14 +4,13 @@ let memoryStorage: { [key: string]: any } = {};
 import { NextRequest, NextResponse } from 'next/server';
 import { edgeConfig, BOARD_KEY } from '../../../lib/kv';
 import { BoardState, ApiResponse } from '../../../lib/board-api';
+import { broadcastBoardState } from './sse/route';
 
 const isEdgeConfigAvailable = process.env.EDGE_CONFIG;
 
 export async function GET() {
   try {
-    const boardState = isEdgeConfigAvailable
-      ? await edgeConfig.get<BoardState>(BOARD_KEY)
-      : memoryStorage[BOARD_KEY];
+    let boardState = memoryStorage[BOARD_KEY];
 
     if (!boardState) {
       // Initialize with default state if not exists
@@ -57,14 +56,8 @@ export async function GET() {
         lastUpdated: new Date().toISOString(),
       };
 
-      if (isEdgeConfigAvailable) {
-        // For Edge Config, we'll use a different approach for updates
-        // In production, updates are typically done via Vercel CLI/API
-        memoryStorage[BOARD_KEY] = defaultState;
-      } else {
-        memoryStorage[BOARD_KEY] = defaultState;
-      }
-      return NextResponse.json({ success: true, data: defaultState });
+      memoryStorage[BOARD_KEY] = defaultState;
+      boardState = defaultState;
     }
 
     return NextResponse.json({ success: true, data: boardState });
@@ -82,21 +75,20 @@ export async function POST(request: NextRequest) {
     const boardState: BoardState = await request.json();
 
     // Get current state for version check
-    const currentState = isEdgeConfigAvailable
-      ? await edgeConfig.get<BoardState>(BOARD_KEY)
-      : memoryStorage[BOARD_KEY];
+    const currentState = memoryStorage[BOARD_KEY];
 
-    // For Edge Config, we simplify version control since it doesn't support
-    // the same concurrency features as KV
+    // Update version
     const updatedState: BoardState = {
       ...boardState,
       version: (boardState.version || 0) + 1,
       lastUpdated: new Date().toISOString(),
     };
 
-    // Store in memory for now - in production Edge Config updates
-    // would be handled via Vercel CLI/API or REST API with tokens
+    // Store in memory
     memoryStorage[BOARD_KEY] = updatedState;
+
+    // Broadcast the update to all connected clients
+    broadcastBoardState(updatedState);
 
     return NextResponse.json({ success: true, data: updatedState });
   } catch (error) {

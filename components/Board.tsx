@@ -82,21 +82,30 @@ export default function Board() {
     loadBoard();
   }, []);
 
-  // Polling for real-time updates
+  // Real-time updates via SSE
   useEffect(() => {
-    const pollInterval = setInterval(async () => {
+    const eventSource = new EventSource('/api/board/sse');
+
+    eventSource.onmessage = (event) => {
       try {
-        const boardState = await fetchBoard();
-        if (boardState && boardState.version > version) {
+        const boardState: BoardState = JSON.parse(event.data);
+        if (boardState.version > version) {
           setColumns(boardState.columns);
           setVersion(boardState.version);
         }
       } catch (err) {
-        console.error('Polling failed:', err);
+        console.error('Failed to parse SSE message:', err);
       }
-    }, 3000); // Poll every 3 seconds
+    };
 
-    return () => clearInterval(pollInterval);
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      // Optionally implement reconnection logic here
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [version]);
 
   // Sync board state to API
