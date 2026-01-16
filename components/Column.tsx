@@ -30,7 +30,7 @@ export default function Column({ column, onAddTask, onDeleteTask }: ColumnProps)
       ref={setNodeRef}
       className={`bg-white rounded-lg shadow-md p-3 flex-1 min-h-64 ${isOver ? 'bg-blue-50' : ''}`}
     >
-      <h2 className="text-lg font-semibold mb-4">{column.title}</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">{column.title}</h2>
       <div className="space-y-2 mb-4">
         {column.tasks.map(task => (
           <TaskCard

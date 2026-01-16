@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import Column from './Column';
+import { fetchBoard, updateBoard, BoardState } from '../lib/board-api';
 
 export interface Task {
   id: string;
   content: string;
+  version?: number;
 }
 
 export interface ColumnData {
   id: string;
   title: string;
   tasks: Task[];
+  version?: number;
 }
 
 const initialColumns: ColumnData[] = [
@@ -55,47 +58,111 @@ const initialColumns: ColumnData[] = [
 
 export default function Board() {
   const [columns, setColumns] = useState<ColumnData[]>(initialColumns);
+  const [version, setVersion] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load board state from API on mount
   useEffect(() => {
-    const saved = localStorage.getItem('kanban-board-v2');
-    if (saved) {
-      setColumns(JSON.parse(saved));
-    }
+    const loadBoard = async () => {
+      try {
+        const boardState = await fetchBoard();
+        if (boardState) {
+          setColumns(boardState.columns);
+          setVersion(boardState.version);
+        }
+      } catch (err) {
+        console.error('Failed to load board:', err);
+        setError('Failed to load board state');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBoard();
   }, []);
 
+  // Polling for real-time updates
   useEffect(() => {
-    localStorage.setItem('kanban-board-v2', JSON.stringify(columns));
-  }, [columns]);
+    const pollInterval = setInterval(async () => {
+      try {
+        const boardState = await fetchBoard();
+        if (boardState && boardState.version > version) {
+          setColumns(boardState.columns);
+          setVersion(boardState.version);
+        }
+      } catch (err) {
+        console.error('Polling failed:', err);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [version]);
+
+  // Sync board state to API
+  const syncBoardState = useCallback(async (newColumns: ColumnData[]) => {
+    const boardState: BoardState = {
+      columns: newColumns,
+      version: version,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    try {
+      const success = await updateBoard(boardState);
+      if (success) {
+        // Update local version on success
+        setVersion(prev => prev + 1);
+      } else {
+        // On failure, revert optimistic update by refetching
+        const currentState = await fetchBoard();
+        if (currentState) {
+          setColumns(currentState.columns);
+          setVersion(currentState.version);
+        }
+        setError('Failed to sync changes - board reverted to latest state');
+        setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
+      }
+    } catch (err) {
+      console.error('Sync failed:', err);
+      // Revert optimistic update
+      const currentState = await fetchBoard();
+      if (currentState) {
+        setColumns(currentState.columns);
+        setVersion(currentState.version);
+      }
+      setError('Network error - changes reverted');
+      setTimeout(() => setError(null), 5000);
+    }
+  }, [version]);
 
   const moveTask = (taskId: string, fromColumnId: string, toColumnId: string) => {
-    setColumns(prev => {
-      const newColumns = [...prev];
-      const fromColumn = newColumns.find(col => col.id === fromColumnId);
-      const toColumn = newColumns.find(col => col.id === toColumnId);
-      const task = fromColumn?.tasks.find(t => t.id === taskId);
-      if (fromColumn && toColumn && task) {
-        fromColumn.tasks = fromColumn.tasks.filter(t => t.id !== taskId);
-        toColumn.tasks.push(task);
-      }
-      return newColumns;
-    });
+    const newColumns = columns.map(col => ({ ...col, tasks: [...col.tasks] }));
+    const fromColumn = newColumns.find(col => col.id === fromColumnId);
+    const toColumn = newColumns.find(col => col.id === toColumnId);
+    const task = fromColumn?.tasks.find(t => t.id === taskId);
+    if (fromColumn && toColumn && task) {
+      fromColumn.tasks = fromColumn.tasks.filter(t => t.id !== taskId);
+      toColumn.tasks.push(task);
+      setColumns(newColumns);
+      syncBoardState(newColumns);
+    }
   };
 
   const addTask = (columnId: string, content: string) => {
     const newTask: Task = { id: Date.now().toString(), content };
-    setColumns(prev =>
-      prev.map(col =>
-        col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
-      )
+    const newColumns = columns.map(col =>
+      col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
     );
+    setColumns(newColumns);
+    syncBoardState(newColumns);
   };
 
   const deleteTask = (taskId: string, columnId: string) => {
-    setColumns(prev =>
-      prev.map(col =>
-        col.id === columnId ? { ...col, tasks: col.tasks.filter(t => t.id !== taskId) } : col
-      )
+    const newColumns = columns.map(col =>
+      col.id === columnId ? { ...col, tasks: col.tasks.filter(t => t.id !== taskId) } : col
     );
+    setColumns(newColumns);
+    syncBoardState(newColumns);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -118,9 +185,22 @@ export default function Board() {
   const readyDeploy = columns.find(col => col.id === 'widgets-ready-deployment');
   const inDeploy = columns.find(col => col.id === 'widgets-in-deployment');
 
+  if (isLoading) {
+    return (
+      <div className="p-2 min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-lg">Loading board...</div>
+      </div>
+    );
+  }
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="p-2 min-h-screen bg-gray-100 space-y-2">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
         {/* Widgets to design */}
         <div className="flex justify-center">
           {widgetsToDesign && (
