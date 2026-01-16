@@ -1,16 +1,11 @@
-// In-memory storage for development/testing when Edge Config is not available
-let memoryStorage: { [key: string]: any } = {};
-
 import { NextRequest, NextResponse } from 'next/server';
-import { edgeConfig, BOARD_KEY } from '../../../lib/kv';
+import { fetchLatestBoardState, uploadBoardState } from '../../../lib/kv';
 import { BoardState, ApiResponse } from '../../../lib/board-api';
 import { broadcastBoardState } from './sse/route';
 
-const isEdgeConfigAvailable = process.env.EDGE_CONFIG;
-
 export async function GET() {
   try {
-    let boardState = memoryStorage[BOARD_KEY];
+    let boardState = await fetchLatestBoardState();
 
     if (!boardState) {
       // Initialize with default state if not exists
@@ -66,7 +61,8 @@ export async function GET() {
         lastUpdated: new Date().toISOString(),
       };
 
-      memoryStorage[BOARD_KEY] = defaultState;
+      // Upload the default state to blob storage
+      await uploadBoardState(defaultState);
       boardState = defaultState;
     }
 
@@ -84,18 +80,15 @@ export async function POST(request: NextRequest) {
   try {
     const boardState: BoardState = await request.json();
 
-    // Get current state for version check
-    const currentState = memoryStorage[BOARD_KEY];
-
-    // Update version
+    // Update version and timestamp
     const updatedState: BoardState = {
       ...boardState,
       version: (boardState.version || 0) + 1,
       lastUpdated: new Date().toISOString(),
     };
 
-    // Store in memory
-    memoryStorage[BOARD_KEY] = updatedState;
+    // Upload to blob storage
+    await uploadBoardState(updatedState);
 
     // Broadcast the update to all connected clients
     broadcastBoardState(updatedState);
