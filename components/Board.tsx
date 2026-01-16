@@ -45,6 +45,16 @@ const initialColumns: ColumnData[] = [
     tasks: [],
   },
   {
+    id: 'widgets-ready-testing',
+    title: 'Widgets ready for testing',
+    tasks: [],
+  },
+  {
+    id: 'widgets-in-testing',
+    title: 'Widgets in testing',
+    tasks: [],
+  },
+  {
     id: 'widgets-ready-deployment',
     title: 'Widgets ready for deployment',
     tasks: [],
@@ -206,6 +216,8 @@ export default function Board() {
   const inSaf = columns.find(col => col.id === 'widgets-in-saf');
   const readyJs = columns.find(col => col.id === 'widgets-ready-js');
   const inJs = columns.find(col => col.id === 'widgets-in-js');
+  const readyTesting = columns.find(col => col.id === 'widgets-ready-testing');
+  const inTesting = columns.find(col => col.id === 'widgets-in-testing');
   const readyDeploy = columns.find(col => col.id === 'widgets-ready-deployment');
   const inDeploy = columns.find(col => col.id === 'widgets-in-deployment');
 
@@ -270,6 +282,25 @@ export default function Board() {
             <Column
               key={inJs.id}
               column={inJs}
+              onDeleteTask={deleteTask}
+              onEditTask={editTask}
+            />
+          )}
+        </div>
+        {/* Testing pair */}
+        <div className="flex gap-4">
+          {readyTesting && (
+            <Column
+              key={readyTesting.id}
+              column={readyTesting}
+              onDeleteTask={deleteTask}
+              onEditTask={editTask}
+            />
+          )}
+          {inTesting && (
+            <Column
+              key={inTesting.id}
+              column={inTesting}
               onDeleteTask={deleteTask}
               onEditTask={editTask}
             />

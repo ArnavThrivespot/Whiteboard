@@ -29,6 +29,7 @@ export default function Column({ column, onAddTask, onDeleteTask, onEditTask }: 
   const getBgColor = (id: string) => {
     if (id === 'widgets-ready-saf' || id === 'widgets-in-saf') return 'bg-red-100';
     if (id === 'widgets-ready-js' || id === 'widgets-in-js') return 'bg-orange-100';
+    if (id === 'widgets-ready-testing' || id === 'widgets-in-testing') return 'bg-yellow-100';
     if (id === 'widgets-ready-deployment' || id === 'widgets-in-deployment') return 'bg-green-100';
     return 'bg-white';
   };

@@ -42,6 +42,16 @@ export async function GET() {
             tasks: [],
           },
           {
+            id: 'widgets-ready-testing',
+            title: 'Widgets ready for testing',
+            tasks: [],
+          },
+          {
+            id: 'widgets-in-testing',
+            title: 'Widgets in testing',
+            tasks: [],
+          },
+          {
             id: 'widgets-ready-deployment',
             title: 'Widgets ready for deployment',
             tasks: [],
